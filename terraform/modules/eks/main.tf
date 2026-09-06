@@ -48,6 +48,17 @@ resource "aws_iam_role_policy_attachment" "cluster" {
   policy_arn = "arn:aws:iam::aws:policy/AmazonEKSClusterPolicy"
 }
 
+resource "aws_kms_key" "eks" {
+  description             = "KMS key for ${var.cluster_name} Kubernetes secrets"
+  deletion_window_in_days = 7
+  enable_key_rotation     = true
+}
+
+resource "aws_kms_alias" "eks" {
+  name          = "alias/${var.cluster_name}-eks-secrets"
+  target_key_id = aws_kms_key.eks.key_id
+}
+
 resource "aws_eks_cluster" "this" {
   name     = var.cluster_name
   role_arn = aws_iam_role.cluster.arn
@@ -74,15 +85,18 @@ resource "aws_eks_cluster" "this" {
   ]
 }
 
-resource "aws_kms_key" "eks" {
-  description             = "KMS key for ${var.cluster_name} Kubernetes secrets"
-  deletion_window_in_days = 7
-  enable_key_rotation     = true
+data "tls_certificate" "eks_oidc" {
+  url = aws_eks_cluster.this.identity[0].oidc[0].issuer
 }
 
-resource "aws_kms_alias" "eks" {
-  name          = "alias/${var.cluster_name}-eks-secrets"
-  target_key_id = aws_kms_key.eks.key_id
+resource "aws_iam_openid_connect_provider" "eks" {
+  url             = aws_eks_cluster.this.identity[0].oidc[0].issuer
+  client_id_list  = ["sts.amazonaws.com"]
+  thumbprint_list = [data.tls_certificate.eks_oidc.certificates[0].sha1_fingerprint]
+
+  tags = {
+    Project = var.project_name
+  }
 }
 
 resource "aws_iam_role" "nodes" {
@@ -155,4 +169,12 @@ output "cluster_name" {
 output "cluster_endpoint" {
   value     = aws_eks_cluster.this.endpoint
   sensitive = true
+}
+
+output "oidc_provider_arn" {
+  value = aws_iam_openid_connect_provider.eks.arn
+}
+
+output "oidc_issuer_url" {
+  value = aws_eks_cluster.this.identity[0].oidc[0].issuer
 }
