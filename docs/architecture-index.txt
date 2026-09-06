@@ -1,0 +1,6 @@
+Architecture Documentation
+
+ARCHITECTURE.md — core engineering flow and design principles.
+architecture-overview.svg — standalone visual architecture for portfolio presentation.
+
+These diagrams describe the reference architecture represented by the repository and do not claim a production deployment.
