@@ -1,0 +1,5 @@
+Platform Architecture Visual
+
+Primary asset: architecture-overview.svg
+
+The visual maps the platform lifecycle across delivery, infrastructure, Kubernetes, security, observability, and SRE operations.
