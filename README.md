@@ -1,6 +1,6 @@
 # Production Cloud Platform Engineering
 
-<p align="center"><strong>A reference Internal Developer Platform on AWS EKS</strong></p>
+<p align="center"><strong>A production-style Internal Developer Platform reference on AWS EKS</strong></p>
 
 <p align="center">
 <a href="https://github.com/obinna-obika-devops/cloud-platform-engineering/actions/workflows/ci.yml"><img src="https://github.com/obinna-obika-devops/cloud-platform-engineering/actions/workflows/ci.yml/badge.svg" alt="Platform CI"></a>
@@ -11,7 +11,25 @@
 <img src="https://img.shields.io/badge/Security-Policy--as--Code-blue" alt="Security">
 </p>
 
-A production-style reference implementation of an internal developer platform on AWS EKS. The platform turns infrastructure and Kubernetes primitives into a controlled self-service path while emphasizing reliability, security, observability, least privilege, and repeatable operations.
+## Why this platform exists
+
+Engineering teams often lose time rebuilding the same cloud and Kubernetes foundations, handling access inconsistently, and relying on manual deployment steps that become difficult to audit or recover from.
+
+This project models a platform engineering approach where infrastructure, application delivery, security controls, observability and operational standards are assembled into a repeatable self-service path. The goal is not simply to provision an EKS cluster; it is to demonstrate how a team can create safer defaults for developers while keeping infrastructure changes reviewable, observable and reversible.
+
+## What I built
+
+- Terraform-based AWS networking and EKS foundation
+- Reusable environment configuration for development, staging and production patterns
+- Kubernetes tenancy controls with namespaces, RBAC, quotas and default-deny networking
+- GitOps reconciliation model using Argo CD boundaries and retry controls
+- Reusable Helm-based application delivery path
+- Workload identity using EKS OIDC and IRSA instead of long-lived application credentials
+- Prometheus-ready application instrumentation with SLO and runbook documentation
+- Policy-as-code controls with Kyverno
+- CI validation for Terraform, Helm, Kubernetes manifests, application tests, container builds and Trivy security scanning
+- Self-service workflow patterns with validation, concurrency protection and audit context
+- Disaster-recovery, incident-response and operational documentation
 
 ## Architecture
 
@@ -31,6 +49,18 @@ flowchart TD
     J --> L
 ```
 
+## Engineering decisions
+
+**GitOps over direct cluster changes.** Desired state stays versioned and reviewable, while Argo CD provides a clear reconciliation boundary between source control and the cluster.
+
+**Short-lived workload identity over static credentials.** IRSA is used as the workload-access pattern so applications can receive narrowly scoped AWS permissions without embedding long-lived access keys.
+
+**Policy and tenancy controls by default.** Namespaces, quotas, RBAC, network policies and restricted workload settings are treated as platform defaults rather than optional hardening steps.
+
+**Validation before deployment.** CI checks Terraform formatting and validation, lints Helm, renders Kubernetes manifests, builds the application image, runs unit tests and blocks high/critical filesystem findings through Trivy.
+
+**Reliability as part of platform design.** HPA, PDB, rolling updates, topology-aware scheduling, SLO definitions and operational runbooks are included so reliability is not left until after deployment.
+
 ## Evidence at a glance
 
 | Engineering area | Inspectable evidence |
@@ -42,6 +72,7 @@ flowchart TD
 | Reusable application delivery | [`charts/`](charts/) + [`apps/`](apps/) |
 | Application observability | [`apps/platform-demo/app.py`](apps/platform-demo/app.py) |
 | CI validation | [`.github/workflows/ci.yml`](.github/workflows/ci.yml) |
+| Self-service workflow | [`.github/workflows/self-service.yml`](.github/workflows/self-service.yml) |
 | Architecture and design | [`docs/architecture.md`](docs/architecture.md) |
 | SRE and operations | [`docs/runbooks/`](docs/runbooks/) |
 | Engineering decisions | [`docs/adr/`](docs/adr/) |
@@ -49,7 +80,7 @@ flowchart TD
 
 ## Engineering model
 
-**Developers** submit changes → **GitHub Actions** validates Terraform, Helm, manifests, application tests and source security → **Argo CD** reconciles desired state → **EKS** runs the workload → **Prometheus metrics, SLOs, policies, quotas, RBAC and network controls** make the platform observable and governable.
+**Developers** submit changes → **GitHub Actions** validates infrastructure, application and security controls → **GitOps desired state** is reviewed → **Argo CD** reconciles the approved state → **EKS** runs the workload → **metrics, SLOs, policies, quotas, RBAC and network controls** make the platform observable and governable.
 
 ## Demonstrated capabilities
 
@@ -120,4 +151,4 @@ For an AWS deployment, initialize Terraform with an environment-specific backend
 
 ## Scope
 
-This is a reference implementation. It contains no cloud credentials and does not claim currently running AWS infrastructure, a connected Prometheus installation, or production traffic unless an operator explicitly deploys those components.
+This repository is a reference implementation and engineering portfolio project. It intentionally contains no cloud credentials and does not claim currently running AWS infrastructure, a connected Prometheus installation, or production traffic unless those components are explicitly deployed by an operator.
