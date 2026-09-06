@@ -8,6 +8,16 @@ variable "project_name" {
   default = "cloud-platform-engineering"
 }
 
+variable "environment" {
+  type    = string
+  default = "dev"
+
+  validation {
+    condition     = contains(["dev", "staging", "production"], var.environment)
+    error_message = "environment must be dev, staging, or production."
+  }
+}
+
 variable "cluster_name" {
   type    = string
   default = "platform-eks"
