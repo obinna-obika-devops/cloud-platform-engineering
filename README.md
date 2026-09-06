@@ -12,8 +12,6 @@
 
 A production-style reference implementation of an internal developer platform on AWS EKS. The platform turns infrastructure and Kubernetes primitives into a safe self-service path for application teams while enforcing reliability, security, observability, and operational standards.
 
-> **Reviewing this for a role?** Start with the [5-minute recruiter/interview walkthrough](docs/recruiter-walkthrough.md), then use [Engineering Evidence](docs/engineering-evidence.md) to map claims to inspectable artifacts.
-
 ## Architecture
 
 ```mermaid
@@ -32,7 +30,7 @@ flowchart TD
     J --> L[Security & Governance]
 ```
 
-## Engineering story
+## Engineering model
 
 **Developers** submit an application definition → **GitHub Actions** validates and packages it → **Argo CD** reconciles desired state → **EKS** runs the workload → **Prometheus/Grafana/OpenTelemetry** provide telemetry → **SLOs, policies, quotas, RBAC and security controls** protect the platform.
 
@@ -41,30 +39,24 @@ flowchart TD
 - AWS VPC + EKS foundation with Terraform
 - Reusable infrastructure modules and environment separation
 - GitOps with Argo CD
-- Kubernetes multi-tenancy primitives: namespaces, RBAC, quotas, limits, network policies
-- Self-service deployment workflow
-- Helm application packaging
+- Kubernetes multi-tenancy: namespaces, RBAC, quotas, limits and network policies
+- Self-service deployment workflow and Helm packaging
 - HPA, PDB and topology-aware scheduling
 - Prometheus/Grafana observability and OpenTelemetry instrumentation
 - SLO/error-budget definitions and incident runbooks
-- Kyverno policy-as-code
-- Trivy, Checkov and Gitleaks security gates
+- Kyverno policy-as-code; Trivy, Checkov and Gitleaks security gates
 - Supply-chain controls and immutable image references
-- Disaster recovery and platform operating model
-- Cost guardrails and resource governance
+- Disaster recovery, platform operating model and cost guardrails
 
-## Engineering Evidence
+## Engineering documentation
 
-Want to verify the engineering depth instead of only reading the feature list? Start here:
-
-- [Recruiter / Interview Walkthrough](docs/recruiter-walkthrough.md) — fastest review path through the project
-- [Engineering Evidence](docs/engineering-evidence.md) — maps platform claims to inspectable artifacts
+- [Engineering Evidence](docs/engineering-evidence.md) — maps platform capabilities to inspectable artifacts
 - [Architecture](docs/architecture.md) — system design and platform boundaries
 - [Operational Runbook](docs/runbooks/operational-runbook.md) — operational procedures
 - [Incident Response](docs/runbooks/incident-response.md) — incident handling workflow
 - [Disaster Recovery](docs/runbooks/disaster-recovery.md) — recovery planning and validation
 - [Platform Operating Model ADR](docs/adr/ADR-001-platform-operating-model.md) — engineering decision record
-- [CI Workflow](.github/workflows/ci.yml) — automated infrastructure, application, and security validation
+- [CI Workflow](.github/workflows/ci.yml) — automated infrastructure, application and security validation
 
 ## Technology
 
@@ -98,11 +90,11 @@ terraform -chdir=terraform validate
 helm lint charts/platform-service
 ```
 
-For a real AWS deployment, provide credentials through CI identity federation or a local AWS profile and supply the required Terraform variables. Never commit credentials.
+For an AWS deployment, provide credentials through CI identity federation or a local AWS profile and supply the required Terraform variables. Never commit credentials.
 
 ## Production engineering notes
 
-This implementation demonstrates production-focused engineering decisions around reliability, security, scalability, and operability. Key considerations include failure modes, reconciliation, blast-radius reduction, workload isolation, error budgets, least-privilege access, and platform abstractions that reduce developer cognitive load while preserving operational visibility.
+The design emphasizes failure modes, reconciliation, blast-radius reduction, workload isolation, error budgets, least-privilege access, operational visibility and platform abstractions that reduce developer cognitive load.
 
 ## Scope
 
