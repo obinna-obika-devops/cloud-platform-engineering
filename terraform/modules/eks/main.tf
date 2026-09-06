@@ -29,9 +29,18 @@ data "aws_iam_policy_document" "cluster_assume" {
   }
 }
 
+resource "aws_cloudwatch_log_group" "cluster" {
+  name              = "/aws/eks/${var.cluster_name}/cluster"
+  retention_in_days = 30
+}
+
 resource "aws_iam_role" "cluster" {
   name               = "${var.cluster_name}-cluster-role"
   assume_role_policy = data.aws_iam_policy_document.cluster_assume.json
+
+  tags = {
+    Project = var.project_name
+  }
 }
 
 resource "aws_iam_role_policy_attachment" "cluster" {
@@ -44,13 +53,36 @@ resource "aws_eks_cluster" "this" {
   role_arn = aws_iam_role.cluster.arn
   version  = var.kubernetes_version
 
+  enabled_cluster_log_types = ["api", "audit", "authenticator", "controllerManager", "scheduler"]
+
   vpc_config {
     subnet_ids              = var.private_subnet_ids
     endpoint_private_access = true
-    endpoint_public_access  = true
+    endpoint_public_access  = false
   }
 
-  depends_on = [aws_iam_role_policy_attachment.cluster]
+  encryption_config {
+    resources = ["secrets"]
+    provider {
+      key_arn = aws_kms_key.eks.arn
+    }
+  }
+
+  depends_on = [
+    aws_iam_role_policy_attachment.cluster,
+    aws_cloudwatch_log_group.cluster,
+  ]
+}
+
+resource "aws_kms_key" "eks" {
+  description             = "KMS key for ${var.cluster_name} Kubernetes secrets"
+  deletion_window_in_days = 7
+  enable_key_rotation     = true
+}
+
+resource "aws_kms_alias" "eks" {
+  name          = "alias/${var.cluster_name}-eks-secrets"
+  target_key_id = aws_kms_key.eks.key_id
 }
 
 resource "aws_iam_role" "nodes" {
@@ -66,6 +98,10 @@ resource "aws_iam_role" "nodes" {
       Action = "sts:AssumeRole"
     }]
   })
+
+  tags = {
+    Project = var.project_name
+  }
 }
 
 resource "aws_iam_role_policy_attachment" "worker" {
@@ -89,6 +125,7 @@ resource "aws_eks_node_group" "system" {
   node_role_arn   = aws_iam_role.nodes.arn
   subnet_ids      = var.private_subnet_ids
   instance_types  = ["t3.medium"]
+  capacity_type   = "ON_DEMAND"
 
   scaling_config {
     desired_size = 2
@@ -97,7 +134,11 @@ resource "aws_eks_node_group" "system" {
   }
 
   update_config {
-    max_unavailable = 1
+    max_unavailable_percentage = 25
+  }
+
+  labels = {
+    workload = "system"
   }
 
   depends_on = [
@@ -112,5 +153,6 @@ output "cluster_name" {
 }
 
 output "cluster_endpoint" {
-  value = aws_eks_cluster.this.endpoint
+  value     = aws_eks_cluster.this.endpoint
+  sensitive = true
 }
