@@ -29,6 +29,12 @@ jobs:
       - name: Helm lint
         run: helm lint charts/platform-service
 
+      - name: Render and validate Kubernetes manifests
+        run: |
+          helm template platform-demo charts/platform-service > /tmp/platform-demo.yaml
+          kubectl apply --dry-run=client --validate=false -f /tmp/platform-demo.yaml
+          kubectl apply --dry-run=client --validate=false -f platform/tenancy.yaml
+
       - name: Build application image
         run: docker build -t platform-demo:${{ github.sha }} apps/platform-demo
 
