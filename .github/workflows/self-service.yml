@@ -1,4 +1,5 @@
 name: Self-Service Environment
+
 on:
   workflow_dispatch:
     inputs:
@@ -8,38 +9,79 @@ on:
         type: choice
         options: [dev, staging, production]
       service:
-        description: Service identifier
+        description: Service identifier (lowercase letters, numbers and hyphens)
         required: true
         type: string
       image_tag:
-        description: Immutable image tag or digest
+        description: Immutable image tag or sha256 digest
         required: true
         type: string
+
 permissions:
   contents: write
+
+concurrency:
+  group: self-service-${{ inputs.environment }}-${{ inputs.service }}
+  cancel-in-progress: false
+
 jobs:
   request:
     runs-on: ubuntu-latest
+    environment: ${{ inputs.environment }}
     steps:
       - uses: actions/checkout@v4
-      - name: Generate deployment values
+        with:
+          fetch-depth: 0
+
+      - name: Validate request
+        shell: bash
         env:
           ENVIRONMENT: ${{ inputs.environment }}
           SERVICE: ${{ inputs.service }}
           IMAGE_TAG: ${{ inputs.image_tag }}
         run: |
-          test "$ENVIRONMENT" != "" && test "$SERVICE" != "" && test "$IMAGE_TAG" != ""
-          mkdir -p environments/$ENVIRONMENT
-          cat > environments/$ENVIRONMENT/$SERVICE.yaml <<EOF
+          set -euo pipefail
+          [[ "$SERVICE" =~ ^[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?$ ]] || {
+            echo "Invalid service identifier" >&2
+            exit 1
+          }
+          [[ "$IMAGE_TAG" =~ ^sha256:[a-f0-9]{64}$ || "$IMAGE_TAG" =~ ^[A-Za-z0-9._-]{1,128}$ ]] || {
+            echo "Image tag must be an immutable tag or sha256 digest" >&2
+            exit 1
+          }
+          case "$ENVIRONMENT" in
+            dev|staging|production) ;;
+            *) echo "Unsupported environment" >&2; exit 1 ;;
+          esac
+
+      - name: Generate desired state
+        shell: bash
+        env:
+          ENVIRONMENT: ${{ inputs.environment }}
+          SERVICE: ${{ inputs.service }}
+          IMAGE_TAG: ${{ inputs.image_tag }}
+        run: |
+          set -euo pipefail
+          mkdir -p "environments/$ENVIRONMENT"
+          cat > "environments/$ENVIRONMENT/$SERVICE.yaml" <<EOF
           service: $SERVICE
           environment: $ENVIRONMENT
           imageTag: $IMAGE_TAG
           promotion: requested
+          requestedBy: $GITHUB_ACTOR
           EOF
+
       - name: Commit desired state
+        shell: bash
         run: |
+          set -euo pipefail
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add environments/
-          git diff --cached --quiet || git commit -m "platform: request ${{ inputs.service }} in ${{ inputs.environment }}"
-          git push
+          if git diff --cached --quiet; then
+            echo "Desired state already matches the request."
+            exit 0
+          fi
+          git commit -m "platform: request ${{ inputs.service }} in ${{ inputs.environment }}"
+          git pull --rebase origin main
+          git push origin HEAD:main
