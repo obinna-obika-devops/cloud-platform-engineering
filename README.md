@@ -3,6 +3,7 @@
 <p align="center"><strong>A reference Internal Developer Platform on AWS EKS</strong></p>
 
 <p align="center">
+<a href="https://github.com/obinna-obika-devops/cloud-platform-engineering/actions/workflows/ci.yml"><img src="https://github.com/obinna-obika-devops/cloud-platform-engineering/actions/workflows/ci.yml/badge.svg" alt="Platform CI"></a>
 <img src="https://img.shields.io/badge/AWS-EKS-orange?logo=amazonaws" alt="AWS EKS">
 <img src="https://img.shields.io/badge/Terraform-IaC-7B42BC?logo=terraform" alt="Terraform">
 <img src="https://img.shields.io/badge/Kubernetes-Platform-326CE5?logo=kubernetes" alt="Kubernetes">
@@ -29,6 +30,19 @@ flowchart TD
     I --> K
     J --> L[Security & Governance]
 ```
+
+## Evidence at a glance
+
+| Engineering area | Inspectable evidence |
+|---|---|
+| Cloud foundation | [`terraform/`](terraform/) |
+| Kubernetes platform | [`platform/`](platform/) |
+| Reusable application delivery | [`charts/`](charts/) + [`apps/`](apps/) |
+| CI and security gates | [`.github/workflows/ci.yml`](.github/workflows/ci.yml) |
+| Architecture and design | [`docs/architecture.md`](docs/architecture.md) |
+| SRE and operations | [`docs/runbooks/`](docs/runbooks/) |
+| Engineering decisions | [`docs/adr/`](docs/adr/) |
+| Capability-to-code map | [`docs/engineering-evidence.md`](docs/engineering-evidence.md) |
 
 ## Engineering model
 
