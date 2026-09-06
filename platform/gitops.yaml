@@ -4,17 +4,34 @@ metadata:
   name: platform-teams
   namespace: argocd
 spec:
-  sourceRepos: ["https://github.com/obinna-obika-devops/cloud-platform-engineering"]
+  description: Guardrails for team-owned platform workloads
+  sourceRepos:
+    - "https://github.com/obinna-obika-devops/cloud-platform-engineering"
   destinations:
     - namespace: team-platform
       server: https://kubernetes.default.svc
   clusterResourceWhitelist: []
+  namespaceResourceWhitelist:
+    - group: ""
+      kind: Service
+    - group: apps
+      kind: Deployment
+    - group: autoscaling
+      kind: HorizontalPodAutoscaler
+    - group: policy
+      kind: PodDisruptionBudget
+    - group: networking.k8s.io
+      kind: NetworkPolicy
+  orphanedResources:
+    warn: true
 ---
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
   name: platform-demo
   namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
 spec:
   project: platform-teams
   source:
@@ -28,4 +45,14 @@ spec:
     automated:
       prune: true
       selfHeal: true
-    syncOptions: [CreateNamespace=true]
+      allowEmpty: false
+    syncOptions:
+      - CreateNamespace=false
+      - PruneLast=true
+      - ApplyOutOfSyncOnly=true
+    retry:
+      limit: 3
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 1m
