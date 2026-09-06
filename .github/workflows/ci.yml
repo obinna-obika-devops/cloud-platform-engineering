@@ -1,0 +1,32 @@
+name: Platform CI
+on:
+  pull_request:
+  push:
+    branches: [main]
+permissions:
+  contents: read
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: hashicorp/setup-terraform@v3
+      - uses: helm/kind-action@v1
+        with: { version: v0.25.0 }
+      - name: Terraform format and validate
+        run: |
+          terraform -chdir=terraform fmt -check
+          terraform -chdir=terraform init -backend=false
+          terraform -chdir=terraform validate
+      - name: Helm lint
+        run: helm lint charts/platform-service
+      - name: Build application image
+        run: docker build -t platform-demo:${{ github.sha }} apps/platform-demo
+      - name: Trivy filesystem scan
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          scan-type: fs
+          scan-ref: .
+          severity: CRITICAL,HIGH
+          ignore-unfixed: true
+          exit-code: '1'

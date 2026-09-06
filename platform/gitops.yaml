@@ -1,0 +1,31 @@
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: platform-teams
+  namespace: argocd
+spec:
+  sourceRepos: ["https://github.com/obinna-obika-devops/cloud-platform-engineering"]
+  destinations:
+    - namespace: team-platform
+      server: https://kubernetes.default.svc
+  clusterResourceWhitelist: []
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: platform-demo
+  namespace: argocd
+spec:
+  project: platform-teams
+  source:
+    repoURL: https://github.com/obinna-obika-devops/cloud-platform-engineering
+    targetRevision: main
+    path: charts/platform-service
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: team-platform
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions: [CreateNamespace=true]

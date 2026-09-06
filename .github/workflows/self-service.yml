@@ -1,0 +1,45 @@
+name: Self-Service Environment
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: Target environment
+        required: true
+        type: choice
+        options: [dev, staging, production]
+      service:
+        description: Service identifier
+        required: true
+        type: string
+      image_tag:
+        description: Immutable image tag or digest
+        required: true
+        type: string
+permissions:
+  contents: write
+jobs:
+  request:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Generate deployment values
+        env:
+          ENVIRONMENT: ${{ inputs.environment }}
+          SERVICE: ${{ inputs.service }}
+          IMAGE_TAG: ${{ inputs.image_tag }}
+        run: |
+          test "$ENVIRONMENT" != "" && test "$SERVICE" != "" && test "$IMAGE_TAG" != ""
+          mkdir -p environments/$ENVIRONMENT
+          cat > environments/$ENVIRONMENT/$SERVICE.yaml <<EOF
+          service: $SERVICE
+          environment: $ENVIRONMENT
+          imageTag: $IMAGE_TAG
+          promotion: requested
+          EOF
+      - name: Commit desired state
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add environments/
+          git diff --cached --quiet || git commit -m "platform: request ${{ inputs.service }} in ${{ inputs.environment }}"
+          git push
