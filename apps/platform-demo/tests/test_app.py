@@ -25,6 +25,14 @@ class PlatformDemoAppTests(unittest.TestCase):
         self.assertEqual(body["status"], "ready")
         self.assertIn("uptime_seconds", body)
 
+    def test_metrics(self):
+        self.client.get("/")
+        response = self.client.get("/metrics")
+        self.assertEqual(response.status_code, 200)
+        payload = response.get_data(as_text=True)
+        self.assertIn("platform_demo_http_requests_total", payload)
+        self.assertIn("platform_demo_http_request_duration_seconds", payload)
+
 
 if __name__ == "__main__":
     unittest.main()
