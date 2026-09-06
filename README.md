@@ -51,6 +51,18 @@ flowchart TD
 - Disaster recovery and platform operating model
 - Cost guardrails and resource governance
 
+## Engineering Evidence
+
+Want to verify the engineering depth instead of only reading the feature list? Start here:
+
+- [Engineering Evidence](docs/engineering-evidence.md) — maps platform claims to inspectable artifacts
+- [Architecture](docs/architecture.md) — system design and platform boundaries
+- [Operational Runbook](docs/runbooks/operational-runbook.md) — operational procedures
+- [Incident Response](docs/runbooks/incident-response.md) — incident handling workflow
+- [Disaster Recovery](docs/runbooks/disaster-recovery.md) — recovery planning and validation
+- [Platform Operating Model ADR](docs/adr/ADR-001-platform-operating-model.md) — engineering decision record
+- [CI Workflow](.github/workflows/ci.yml) — automated infrastructure, application, and security validation
+
 ## Technology
 
 | Domain | Stack |
