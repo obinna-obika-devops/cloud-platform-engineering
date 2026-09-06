@@ -1,0 +1,4 @@
+Canonical visual: architecture-overview.svg
+Supporting narrative: architecture.md
+
+Portfolio/reference architecture documentation.
