@@ -10,7 +10,7 @@
 <img src="https://img.shields.io/badge/Security-Policy--as--Code-blue" alt="Security">
 </p>
 
-A recruiter-grade reference implementation of an internal developer platform on AWS EKS. The platform turns infrastructure and Kubernetes primitives into a safe self-service path for application teams while enforcing reliability, security, observability, and operational standards.
+A production-style reference implementation of an internal developer platform on AWS EKS. The platform turns infrastructure and Kubernetes primitives into a safe self-service path for application teams while enforcing reliability, security, observability, and operational standards.
 
 ## Architecture
 
