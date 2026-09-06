@@ -11,24 +11,24 @@
 <img src="https://img.shields.io/badge/Security-Policy--as--Code-blue" alt="Security">
 </p>
 
-A production-style reference implementation of an internal developer platform on AWS EKS. The platform turns infrastructure and Kubernetes primitives into a safe self-service path for application teams while enforcing reliability, security, observability, and operational standards.
+A production-style reference implementation of an internal developer platform on AWS EKS. The platform turns infrastructure and Kubernetes primitives into a controlled self-service path while emphasizing reliability, security, observability, least privilege, and repeatable operations.
 
 ## Architecture
 
 ```mermaid
 flowchart TD
     A[Developers / Teams] --> B[GitHub Actions]
-    B --> C[Tests / Security Gates]
-    C --> D[GitOps Manifests]
+    B --> C[Tests / Validation / Security Scan]
+    C --> D[GitOps Desired State]
     D --> E[Argo CD]
     E --> F[AWS EKS]
     F --> G[Application Workloads]
-    F --> H[Prometheus / Grafana]
-    F --> I[OpenTelemetry]
-    F --> J[Kyverno / RBAC / Network Policies]
+    F --> H[Prometheus Metrics]
+    F --> I[Kyverno / RBAC / Network Policies]
+    F --> J[IRSA / OIDC Workload Identity]
     H --> K[SLOs / Alerts / Runbooks]
-    I --> K
-    J --> L[Security & Governance]
+    I --> L[Security & Governance]
+    J --> L
 ```
 
 ## Evidence at a glance
@@ -36,9 +36,12 @@ flowchart TD
 | Engineering area | Inspectable evidence |
 |---|---|
 | Cloud foundation | [`terraform/`](terraform/) |
+| Remote state & environments | [`docs/terraform-state-and-environments.md`](docs/terraform-state-and-environments.md) |
+| Workload identity | [`terraform/modules/irsa/`](terraform/modules/irsa/) |
 | Kubernetes platform | [`platform/`](platform/) |
 | Reusable application delivery | [`charts/`](charts/) + [`apps/`](apps/) |
-| CI and security gates | [`.github/workflows/ci.yml`](.github/workflows/ci.yml) |
+| Application observability | [`apps/platform-demo/app.py`](apps/platform-demo/app.py) |
+| CI validation | [`.github/workflows/ci.yml`](.github/workflows/ci.yml) |
 | Architecture and design | [`docs/architecture.md`](docs/architecture.md) |
 | SRE and operations | [`docs/runbooks/`](docs/runbooks/) |
 | Engineering decisions | [`docs/adr/`](docs/adr/) |
@@ -46,30 +49,36 @@ flowchart TD
 
 ## Engineering model
 
-**Developers** submit an application definition → **GitHub Actions** validates and packages it → **Argo CD** reconciles desired state → **EKS** runs the workload → **Prometheus/Grafana/OpenTelemetry** provide telemetry → **SLOs, policies, quotas, RBAC and security controls** protect the platform.
+**Developers** submit changes → **GitHub Actions** validates Terraform, Helm, manifests, application tests and source security → **Argo CD** reconciles desired state → **EKS** runs the workload → **Prometheus metrics, SLOs, policies, quotas, RBAC and network controls** make the platform observable and governable.
 
 ## Demonstrated capabilities
 
-- AWS VPC + EKS foundation with Terraform
-- Reusable infrastructure modules and environment separation
-- GitOps with Argo CD
-- Kubernetes multi-tenancy: namespaces, RBAC, quotas, limits and network policies
-- Self-service deployment workflow and Helm packaging
-- HPA, PDB and topology-aware scheduling
-- Prometheus/Grafana observability and OpenTelemetry instrumentation
+- AWS VPC + private-endpoint EKS foundation with Terraform
+- KMS encryption for Kubernetes secrets and EKS control-plane logging
+- Remote-state backend pattern with environment-specific state isolation
+- Reusable Terraform modules and dev/staging/production configuration
+- EKS OIDC provider plus reusable IRSA workload-identity module
+- GitOps reconciliation with Argo CD project boundaries and retry controls
+- Kubernetes multi-tenancy with namespaces, RBAC, quotas, limits and default-deny networking
+- Restricted Pod Security admission and hardened workload security contexts
+- Self-service environment requests with validation, concurrency protection and audit context
+- HPA, PDB, rolling updates and topology-aware scheduling
+- Prometheus application metrics and scrape discovery
 - SLO/error-budget definitions and incident runbooks
-- Kyverno policy-as-code; Trivy, Checkov and Gitleaks security gates
-- Supply-chain controls and immutable image references
-- Disaster recovery, platform operating model and cost guardrails
+- Kyverno policy-as-code controls
+- Docker image build, application tests, Terraform/Helm validation and Trivy scanning in CI
+- Disaster-recovery and platform operating procedures
 
 ## Engineering documentation
 
 - [Engineering Evidence](docs/engineering-evidence.md) — maps platform capabilities to inspectable artifacts
 - [Architecture](docs/architecture.md) — system design and platform boundaries
-- [Operational Runbook](docs/runbooks/operational-runbook.md) — operational procedures
-- [Incident Response](docs/runbooks/incident-response.md) — incident handling workflow
-- [Disaster Recovery](docs/runbooks/disaster-recovery.md) — recovery planning and validation
-- [Platform Operating Model ADR](docs/adr/ADR-001-platform-operating-model.md) — engineering decision record
+- [Terraform State & Environments](docs/terraform-state-and-environments.md) — remote-state and environment strategy
+- [Workload Identity & Observability](docs/workload-identity-and-observability.md) — IRSA and metrics design
+- [Operational Runbook](docs/operational-runbook.md) — operational procedures
+- [Incident Response](docs/incident-response.md) — incident handling workflow
+- [Disaster Recovery](docs/disaster-recovery.md) — recovery planning and validation
+- [Platform Operating Model ADR](docs/adr-001-platform-operating-model.md) — engineering decision record
 - [CI Workflow](.github/workflows/ci.yml) — automated infrastructure, application and security validation
 
 ## Technology
@@ -77,39 +86,38 @@ flowchart TD
 | Domain | Stack |
 |---|---|
 | Cloud | AWS, EKS, VPC |
-| IaC | Terraform |
+| IaC | Terraform, S3 remote-state pattern |
+| Identity | IAM, EKS OIDC, IRSA |
 | Containers | Docker, Kubernetes, Helm |
 | Delivery | GitHub Actions, Argo CD, GitOps |
-| Observability | Prometheus, Grafana, OpenTelemetry |
-| Security | Kyverno, Trivy, Checkov, Gitleaks |
-| Reliability | SLOs, error budgets, PDB, HPA, DR |
+| Observability | Prometheus instrumentation and scrape discovery |
+| Security | Kyverno, RBAC, NetworkPolicy, Pod Security, Trivy |
+| Reliability | SLOs, error budgets, PDB, HPA, topology spread, DR |
 
 ## Repository map
 
 ```text
-terraform/       AWS/EKS platform foundation
-platform/        cluster-wide policies and GitOps bootstrap
+terraform/       AWS/EKS foundation, environment values and IRSA module
+platform/        cluster policies, tenancy controls and GitOps definitions
 charts/          reusable application Helm chart
-apps/            example production-style service
+apps/            instrumented example service and tests
 .github/         CI and self-service workflows
-docs/            architecture, SLOs, runbooks and ADRs
+docs/            architecture, SLOs, runbooks, state strategy and ADRs
 ```
 
-## Quick start
+## Local validation
 
 ```bash
-terraform -chdir=terraform fmt -check
-terraform -chdir=terraform init
+terraform -chdir=terraform fmt -check -recursive
+terraform -chdir=terraform init -backend=false
 terraform -chdir=terraform validate
 helm lint charts/platform-service
+python -m pip install -r apps/platform-demo/requirements.txt
+python -m unittest discover -s apps/platform-demo/tests -p "test_*.py"
 ```
 
-For an AWS deployment, provide credentials through CI identity federation or a local AWS profile and supply the required Terraform variables. Never commit credentials.
-
-## Production engineering notes
-
-The design emphasizes failure modes, reconciliation, blast-radius reduction, workload isolation, error budgets, least-privilege access, operational visibility and platform abstractions that reduce developer cognitive load.
+For an AWS deployment, initialize Terraform with an environment-specific backend configuration and use short-lived AWS credentials. Never commit credentials or backend secrets.
 
 ## Scope
 
-**Status:** portfolio/reference implementation. The repository contains no cloud credentials, private keys, or claims of currently running AWS resources unless explicitly provisioned by an operator.
+This is a reference implementation. It contains no cloud credentials and does not claim currently running AWS infrastructure, a connected Prometheus installation, or production traffic unless an operator explicitly deploys those components.
