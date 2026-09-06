@@ -12,6 +12,8 @@
 
 A production-style reference implementation of an internal developer platform on AWS EKS. The platform turns infrastructure and Kubernetes primitives into a safe self-service path for application teams while enforcing reliability, security, observability, and operational standards.
 
+> **Reviewing this for a role?** Start with the [5-minute recruiter/interview walkthrough](docs/recruiter-walkthrough.md), then use [Engineering Evidence](docs/engineering-evidence.md) to map claims to inspectable artifacts.
+
 ## Architecture
 
 ```mermaid
@@ -55,6 +57,7 @@ flowchart TD
 
 Want to verify the engineering depth instead of only reading the feature list? Start here:
 
+- [Recruiter / Interview Walkthrough](docs/recruiter-walkthrough.md) — fastest review path through the project
 - [Engineering Evidence](docs/engineering-evidence.md) — maps platform claims to inspectable artifacts
 - [Architecture](docs/architecture.md) — system design and platform boundaries
 - [Operational Runbook](docs/runbooks/operational-runbook.md) — operational procedures
