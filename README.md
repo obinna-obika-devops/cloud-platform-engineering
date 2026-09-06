@@ -99,7 +99,7 @@ For a real AWS deployment, provide credentials through CI identity federation or
 
 ## Production engineering notes
 
-This project is designed to be discussed in an interview: explain trade-offs, failure modes, reconciliation, blast-radius reduction, workload isolation, error budgets, least privilege, and how platform abstractions reduce cognitive load without hiding operational reality.
+This implementation demonstrates production-focused engineering decisions around reliability, security, scalability, and operability. Key considerations include failure modes, reconciliation, blast-radius reduction, workload isolation, error budgets, least-privilege access, and platform abstractions that reduce developer cognitive load while preserving operational visibility.
 
 ## Scope
 
