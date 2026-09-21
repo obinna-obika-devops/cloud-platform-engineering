@@ -1,6 +1,6 @@
-# Production Cloud Platform Engineering
+# Production Cloud Platform Engineering — DevOps • SRE • Platform • Cloud
 
-<p align="center"><strong>A production-style Internal Developer Platform reference on AWS EKS</strong></p>
+<p align="center"><strong>A production-style cloud platform portfolio spanning AWS EKS and an Azure AKS reference implementation</strong></p>
 
 <p align="center">
 <a href="https://github.com/obinna-obika-devops/cloud-platform-engineering/actions/workflows/ci.yml"><img src="https://github.com/obinna-obika-devops/cloud-platform-engineering/actions/workflows/ci.yml/badge.svg" alt="Platform CI"></a>
@@ -61,11 +61,25 @@ flowchart TD
 
 **Reliability as part of platform design.** HPA, PDB, rolling updates, topology-aware scheduling, SLO definitions and operational runbooks are included so reliability is not left until after deployment.
 
+## Role coverage
+
+| Target role | Evidence in this repository |
+|---|---|
+| DevOps Engineer | GitHub Actions CI, GitOps/Argo CD, Docker, Helm, Terraform, automated validation and security scanning |
+| Site Reliability Engineer | SLOs, error budgets, Prometheus instrumentation, HPA/PDB, incident response, runbooks and disaster recovery |
+| Platform Engineer | Self-service workflows, reusable modules/charts, tenancy, policy-as-code, RBAC and standardized golden paths |
+| Cloud Engineer | AWS VPC/EKS/IAM/IRSA plus Azure VNet/AKS/ACR/Key Vault/Log Analytics reference infrastructure |
+
+## Azure reference implementation
+
+The primary implementation is AWS/EKS, and the repository now also includes an [Azure AKS reference](azure-reference/) showing the same platform principles with Azure networking, AKS, ACR, Key Vault and Log Analytics. This gives the project explicit cloud-engineering evidence across both AWS and Azure without claiming deployed infrastructure.
+
 ## Evidence at a glance
 
 | Engineering area | Inspectable evidence |
 |---|---|
-| Cloud foundation | [`terraform/`](terraform/) |
+| AWS cloud foundation | [`terraform/`](terraform/) |
+| Azure AKS reference | [`azure-reference/`](azure-reference/) |
 | Remote state & environments | [`docs/terraform-state-and-environments.md`](docs/terraform-state-and-environments.md) |
 | Workload identity | [`terraform/modules/irsa/`](terraform/modules/irsa/) |
 | Kubernetes platform | [`platform/`](platform/) |
@@ -129,6 +143,7 @@ flowchart TD
 
 ```text
 terraform/       AWS/EKS foundation, environment values and IRSA module
+azure-reference/ Azure VNet/AKS/ACR/Key Vault/Log Analytics reference
 platform/        cluster policies, tenancy controls and GitOps definitions
 charts/          reusable application Helm chart
 apps/            instrumented example service and tests
